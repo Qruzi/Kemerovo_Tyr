@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:untitled/card/card_new.dart';
+import 'package:untitled/navigation/feedback.dart';
+import '../Auth/homescreen.dart';
+import '../card/card_new.dart';
 import 'map_screen.dart';
-import 'feedback.dart';
 
 class NavigationScreen extends StatefulWidget {
-  const NavigationScreen({super.key});
-
   @override
   _NavigationScreenState createState() => _NavigationScreenState();
 }
 
 class _NavigationScreenState extends State<NavigationScreen> {
   int _selectedIndex = 0;
-  final List<Widget> _screens = [
+  final List<Widget> _pages = [
+    HomeScreen(),
+    const MapScreen(),
     CardListScreen(),
-    MapPage(),
     FeedbackPage(),
   ];
 
@@ -27,29 +27,29 @@ class _NavigationScreenState extends State<NavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home, color: Colors.blue),
+            icon: Icon(Icons.home,color: Colors.blue,),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.map, color: Colors.blue),
-            label: 'Maps',
+            icon: Icon(Icons.map,color: Colors.blue),
+            label: 'Map',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.feedback, color: Colors.blue),
+            icon: Icon(Icons.attractions,color: Colors.blue),
+            label: 'Card',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.feedback,color: Colors.blue),
             label: 'Feedback',
           ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
-        backgroundColor: Colors.white,
-        type: BottomNavigationBarType.fixed,
-        selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold),
       ),
     );
   }

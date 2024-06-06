@@ -1,45 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map/plugin_api.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
-class MapPage extends StatefulWidget {
+class MapScreen extends StatefulWidget {
+  const MapScreen({super.key});
+
   @override
-  _MapPageState createState() => _MapPageState();
+  _MapScreenState createState() => _MapScreenState();
 }
 
-class _MapPageState extends State<MapPage> {
-  MapController mapController = MapController();
-  double zoomLevel = 14.0;
-  List<Marker> markers = [];
+class _MapScreenState extends State<MapScreen> {
+  final List<Marker> _markers = [
+    Marker(
+      width: 80.0,
+      height: 80.0,
+      point: LatLng(55.343673, 86.078145),
+      builder: (ctx) => Container(
+        child: Icon(
+          Icons.location_on,
+          color: Colors.red,
+          size: 40.0,
+        ),
+      ),
+    ),
+    Marker(
+      width: 80.0,
+      height: 80.0,
+      point: LatLng(55.360359, 86.085159),
+      builder: (ctx) => Container(
+        child: Icon(
+          Icons.location_on,
+          color: Colors.blue,
+          size: 40.0,
+        ),
+      ),
+    ),
+  ];
 
-  @override
-  void initState() {
-    super.initState();
-    fetchMarkers();
+  MapController _mapController = MapController();
+  double _currentZoom = 10.0;
+
+  void _zoomIn() {
+    setState(() {
+      _currentZoom++;
+      _mapController.move(_mapController.center, _currentZoom);
+    });
   }
 
-  void fetchMarkers() async {
-    FirebaseFirestore.instance.collection('markers').snapshots().listen((snapshot) {
-      List<Marker> newMarkers = [];
-      for (var document in snapshot.docs) {
-        GeoPoint geoPoint = document['location'];
-        newMarkers.add(
-          Marker(
-            width: 80.0,
-            height: 80.0,
-            point: LatLng(geoPoint.latitude, geoPoint.longitude),
-            child: Icon(
-              Icons.location_pin,
-              color: Colors.red,
-              size: 50.0,
-              ),
-            ),
-          );
-      }
-      setState(() {
-        markers = newMarkers;
-      });
+  void _zoomOut() {
+    setState(() {
+      _currentZoom--;
+      _mapController.move(_mapController.center, _currentZoom);
     });
   }
 
@@ -47,48 +59,42 @@ class _MapPageState extends State<MapPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Карта'),
+        title: Text('Flutter Map Example'),
       ),
-      body: FlutterMap(
-        options: MapOptions(
-          initialCenter: LatLng(55.344281, 86.064375), // Начальные координаты карты
-          initialZoom: zoomLevel, // Начальный уровень масштабирования
-          onPositionChanged: (MapPosition pos, bool hasGesture) {
-            // Обновление уровня масштабирования при изменении позиции карты
-            setState(() {
-              zoomLevel = pos.zoom!;
-            });
-          },
-        ),
-        mapController: mapController,
+      body: Stack(
         children: [
-          TileLayer(
-            urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            subdomains: ['a', 'b', 'c'],
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              center: LatLng(55.355450, 86.086144),
+              zoom: _currentZoom,
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                subdomains: ['a', 'b', 'c'],
+              ),
+              MarkerLayer(
+                markers: _markers,
+              ),
+            ],
           ),
-          MarkerLayer(
-            markers: markers,
-          ),
-        ],
-      ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            onPressed: () {
-              // Увеличение масштаба карты
-              mapController.move(mapController.center, mapController.zoom + 1);
-            },
-            child: Icon(Icons.add),
-          ),
-          SizedBox(height: 10.0),
-          FloatingActionButton(
-            onPressed: () {
-              // Уменьшение масштаба карты
-              mapController.move(mapController.center, mapController.zoom - 1);
-            },
-            child: Icon(Icons.remove),
+          Positioned(
+            top: 450.0,
+            right: 10.0,
+            child: Column(
+              children: [
+                FloatingActionButton(
+                  onPressed: _zoomIn,
+                  child: Icon(Icons.zoom_in),
+                ),
+                SizedBox(height: 10.0),
+                FloatingActionButton(
+                  onPressed: _zoomOut,
+                  child: Icon(Icons.zoom_out),
+                ),
+              ],
+            ),
           ),
         ],
       ),
