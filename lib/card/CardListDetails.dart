@@ -2,20 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:map_launcher/map_launcher.dart'; // Импортируем для использования map_launcher
 
 class CardDetailScreen extends StatefulWidget {
   final String title;
   final String description;
   final String location;
-  final List<String> imageUrl; // Список URL-адресов изображений
+  final List<String> imageUrl;
   final String audioGuideUrl;
+  final String? posterUrl; // posterUrl может быть null
+  final String category; // Добавим категорию
+  final double latitude; // Добавим широту
+  final double longitude; // Добавим долготу
 
   CardDetailScreen({
     required this.title,
     required this.description,
     required this.location,
-    required this.imageUrl, // Изменено на список URL-адресов
+    required this.imageUrl,
     required this.audioGuideUrl,
+    this.posterUrl,
+    required this.category,
+    required this.latitude,
+    required this.longitude,
   });
 
   @override
@@ -36,6 +46,48 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
     setState(() {
       _isPlaying = !_isPlaying;
     });
+  }
+
+  Future<void> _launchURL() async {
+    if (widget.posterUrl != null) {
+      final url = widget.posterUrl!;
+      if (await canLaunch(url)) {
+        await launch(url);
+      } else {
+        throw 'Could not launch $url';
+      }
+    }
+  }
+
+  Future<void> _openMaps() async {
+    final availableMaps = await MapLauncher.installedMaps;
+    final coords = Coords(widget.latitude, widget.longitude);
+    final title = widget.title;
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Wrap(
+              children: availableMaps.map((map) {
+                return ListTile(
+                  onTap: () {
+                    map.showMarker(
+                      coords: coords,
+                      title: title,
+                    );
+                    Navigator.pop(
+                        context); // Закрываем модальное окно после выбора карты
+                  },
+                  title: Text(map.mapName),
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -59,7 +111,7 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
               options: CarouselOptions(
                 height: 400,
                 enlargeCenterPage: true,
-                enableInfiniteScroll: true,
+                enableInfiniteScroll: false,
                 autoPlay: false,
               ),
               items: widget.imageUrl.map((imageUrl) {
@@ -118,6 +170,24 @@ class _CardDetailScreenState extends State<CardDetailScreen> {
                 ),
               ),
             ],
+            if (widget.category == 'Театры' && widget.posterUrl != null) ...[
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton.icon(
+                  onPressed: _launchURL,
+                  icon: Icon(Icons.event),
+                  label: Text('Перейти на афишу'),
+                ),
+              ),
+            ],
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton.icon(
+                onPressed: _openMaps,
+                icon: Icon(Icons.map),
+                label: Text('Построить маршрут'),
+              ),
+            ),
           ],
         ),
       ),

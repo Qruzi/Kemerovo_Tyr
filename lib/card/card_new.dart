@@ -1,73 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:untitled/card/CardListDetails.dart'; // Для аутентификации
+import 'package:untitled/card/CardListDetails.dart';
 
 class CardListScreen extends StatefulWidget {
   @override
   _CardListScreenState createState() => _CardListScreenState();
 }
 
-class _CardListScreenState extends State<CardListScreen>
-    with SingleTickerProviderStateMixin {
+class _CardListScreenState extends State<CardListScreen> {
   late TextEditingController _searchController;
-  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
-    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Достопримечательности',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.white,
-          labelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          tabs: [
-            Tab(text: 'Монументы'),
-            Tab(text: 'Музеи'),
-            Tab(text: 'Театры'),
-            Tab(text: 'Архитектура'),
+    return DefaultTabController(
+      length: 4, // Количество вкладок
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Card List'),
+          bottom: TabBar(
+            tabs: [
+              Tab(text: 'Монументы'),
+              Tab(text: 'Музеи'),
+              Tab(text: 'Театры'),
+              Tab(text: 'Архитектура'),
+            ],
+          ),
+        ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  labelText: 'Search',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onChanged: (value) {
+                  setState(() {});
+                },
+              ),
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _buildCardList('Монументы'),
+                  _buildCardList('Музеи'),
+                  _buildCardList('Театры'),
+                  _buildCardList('Архитектура'),
+                ],
+              ),
+            ),
           ],
         ),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                labelText: 'Поиск',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onChanged: (value) {
-                setState(() {});
-              },
-            ),
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildCardList('Монументы'),
-                _buildCardList('Музеи'),
-                _buildCardList('Театры'),
-                _buildCardList('Архитектура'),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -78,7 +72,7 @@ class _CardListScreenState extends State<CardListScreen>
           .collection('items')
           .where('category', isEqualTo: category)
           .snapshots(),
-      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+      builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
         }
@@ -97,7 +91,7 @@ class _CardListScreenState extends State<CardListScreen>
               elevation: 4,
               margin: EdgeInsets.all(8),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: InkWell(
                 onTap: () {
@@ -108,9 +102,14 @@ class _CardListScreenState extends State<CardListScreen>
                         title: card['title'],
                         description: card['description'],
                         location: card['location'],
-                        imageUrl: List<String>.from(
-                            card['imageUrl']), // Список URL-адресов
+                        imageUrl: List<String>.from(card['imageUrl']),
                         audioGuideUrl: card['audioGuideUrl'],
+                        posterUrl: card.data().containsKey('posterUrl')
+                            ? card['posterUrl']
+                            : null,
+                        category: card['category'],
+                        latitude: card['latitude'],
+                        longitude: card['longitude'],
                       ),
                     ),
                   );
@@ -120,12 +119,12 @@ class _CardListScreenState extends State<CardListScreen>
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(15),
-                        topRight: Radius.circular(15),
+                        topLeft: Radius.circular(10),
+                        topRight: Radius.circular(10),
                       ),
                       child: Image.network(
                         card['imageUrl']
-                            [0], // Первое изображение для отображения в списке
+                            [0], // Отображаем первое изображение из списка
                         height: 200,
                         fit: BoxFit.cover,
                         loadingBuilder: (context, child, progress) {
@@ -141,22 +140,11 @@ class _CardListScreenState extends State<CardListScreen>
                       child: Text(
                         card['title'],
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text(
-                        card['location'],
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 8),
                   ],
                 ),
               ),
@@ -170,7 +158,6 @@ class _CardListScreenState extends State<CardListScreen>
   @override
   void dispose() {
     _searchController.dispose();
-    _tabController.dispose();
     super.dispose();
   }
 }
