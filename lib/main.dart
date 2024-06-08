@@ -6,7 +6,6 @@ import 'Theme/theme.dart';
 import 'card/card_new.dart';
 import 'firebase_options.dart';
 import 'navigation/feedback.dart';
-import 'navigation/map_screen.dart';
 import 'navigation/navigation.dart';
 
 void main() async {
@@ -29,7 +28,6 @@ class MyApp extends StatelessWidget {
       routes: {
         '/auth': (context) => AuthScreen(),
         '/home': (context) => NavigationScreen(),
-        '/map': (context) => const MapScreen(),
         '/feedback': (context) => FeedbackPage(),
         '/card': (context) => CardListScreen(),
       },

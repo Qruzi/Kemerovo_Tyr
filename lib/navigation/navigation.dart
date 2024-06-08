@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:untitled/navigation/feedback.dart';
 import '../Auth/homescreen.dart';
 import '../card/card_new.dart';
-import 'map_screen.dart';
 
 class NavigationScreen extends StatefulWidget {
   @override
@@ -13,7 +12,6 @@ class _NavigationScreenState extends State<NavigationScreen> {
   int _selectedIndex = 0;
   final List<Widget> _pages = [
     HomeScreen(),
-    const MapScreen(),
     CardListScreen(),
     FeedbackPage(),
   ];
@@ -33,10 +31,6 @@ class _NavigationScreenState extends State<NavigationScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.home,color: Colors.blue,),
             label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.map,color: Colors.blue),
-            label: 'Map',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.attractions,color: Colors.blue),
