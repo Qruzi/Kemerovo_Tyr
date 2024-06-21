@@ -31,9 +31,11 @@ class _AuthScreenState extends State<AuthScreen> {
 
     try {
       if (_isLogin) {
-        await _auth.signInWithEmailAndPassword(email: email, password: password);
+        await _auth.signInWithEmailAndPassword(
+            email: email, password: password);
       } else {
-        await _auth.createUserWithEmailAndPassword(email: email, password: password);
+        await _auth.createUserWithEmailAndPassword(
+            email: email, password: password);
       }
       Navigator.of(context).pushReplacementNamed('/home');
     } on FirebaseAuthException catch (e) {
@@ -41,7 +43,7 @@ class _AuthScreenState extends State<AuthScreen> {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'Authentication failed')),
+        SnackBar(content: Text(e.message ?? 'Ошибка аутентификации')),
       );
     }
   }
@@ -59,7 +61,7 @@ class _AuthScreenState extends State<AuthScreen> {
         _isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Anonymous sign-in failed')),
+        SnackBar(content: Text('Ошибка анонимного входа')),
       );
     }
   }
@@ -82,85 +84,92 @@ class _AuthScreenState extends State<AuthScreen> {
             child: _isLoading
                 ? SpinKitCircle(color: Colors.white, size: 50.0)
                 : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      _isLogin ? 'Login' : 'Sign Up',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _isLogin ? 'Вход' : 'Регистрация',
+                            style: TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          TextField(
+                            controller: _emailController,
+                            decoration: InputDecoration(
+                              labelText: 'Электронная почта',
+                              labelStyle: TextStyle(color: Colors.white),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.2),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          SizedBox(height: 20),
+                          TextField(
+                            controller: _passwordController,
+                            decoration: InputDecoration(
+                              labelText: 'Пароль',
+                              labelStyle: TextStyle(color: Colors.white),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.2),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            obscureText: true,
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: _authenticate,
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.blue,
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 30, vertical: 15),
+                            ),
+                            child:
+                                Text(_isLogin ? 'Войти' : 'Зарегистрироваться'),
+                          ),
+                          TextButton(
+                            onPressed: _toggleMode,
+                            child: Text(
+                              _isLogin
+                                  ? 'Создать новый аккаунт'
+                                  : 'У меня уже есть аккаунт',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: _signInAnonymously,
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.blue,
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 30, vertical: 15),
+                            ),
+                            child: Text('Войти анонимно'),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 20),
-                    TextField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        labelStyle: TextStyle(color: Colors.white),
-                        filled: true,
-                        fillColor: Colors.white.withOpacity(0.2),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    SizedBox(height: 20),
-                    TextField(
-                      controller: _passwordController,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        labelStyle: TextStyle(color: Colors.white),
-                        filled: true,
-                        fillColor: Colors.white.withOpacity(0.2),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      obscureText: true,
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _authenticate,
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.blue, backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      ),
-                      child: Text(_isLogin ? 'Login' : 'Sign Up'),
-                    ),
-                    TextButton(
-                      onPressed: _toggleMode,
-                      child: Text(
-                        _isLogin ? 'Create new account' : 'I already have an account',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: _signInAnonymously,
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.blue, backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                      ),
-                      child: Text('Sign in Anonymously'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
           ),
         ],
       ),

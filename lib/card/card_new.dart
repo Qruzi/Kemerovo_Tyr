@@ -22,7 +22,7 @@ class _CardListScreenState extends State<CardListScreen> {
       length: 4, // Количество вкладок
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Card List'),
+          title: Text('Достопримечательности'),
           bottom: TabBar(
             tabs: [
               Tab(text: 'Монументы'),
@@ -39,7 +39,7 @@ class _CardListScreenState extends State<CardListScreen> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  labelText: 'Search',
+                  labelText: 'Поиск',
                   prefixIcon: Icon(Icons.search),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),

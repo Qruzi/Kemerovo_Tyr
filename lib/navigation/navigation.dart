@@ -11,8 +11,8 @@ class NavigationScreen extends StatefulWidget {
 class _NavigationScreenState extends State<NavigationScreen> {
   int _selectedIndex = 0;
   final List<Widget> _pages = [
-    HomeScreen(),
     CardListScreen(),
+    HomeScreen(),
     FeedbackPage(),
   ];
 
@@ -29,20 +29,19 @@ class _NavigationScreenState extends State<NavigationScreen> {
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home,color: Colors.blue,),
-            label: 'Home',
+            icon: Icon(Icons.attractions),
+            label: 'Достопримечательности',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.attractions,color: Colors.blue),
-            label: 'Card',
+            icon: Icon(Icons.home),
+            label: 'Главная',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.feedback,color: Colors.blue),
+            icon: Icon(Icons.feedback),
             label: 'Feedback',
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
         onTap: _onItemTapped,
       ),
     );

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Add this line
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -12,58 +9,105 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final User? user = FirebaseAuth.instance.currentUser;
-  File? _image;
-  bool _isLoading = false;
-  String? _profileImageUrl;
+  String _userName = "Пользователь";
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _todoController = TextEditingController();
+  List<Map<String, dynamic>> _todoList = [];
 
   @override
   void initState() {
     super.initState();
-    _loadProfileImage();
+    _loadUserName();
+    _loadTodoList();
   }
 
-  Future<void> _loadProfileImage() async {
-    if (user != null && user!.photoURL != null) {
+  Future<void> _loadUserName() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('userName') ?? "Пользователь";
+    });
+  }
+
+  Future<void> _saveUserName(String name) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userName', name);
+  }
+
+  Future<void> _loadTodoList() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? todoListString = prefs.getString('todoList');
+    if (todoListString != null) {
       setState(() {
-        _profileImageUrl = user!.photoURL!;
+        _todoList = List<Map<String, dynamic>>.from(json.decode(todoListString));
       });
     }
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _saveTodoList() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('todoList', json.encode(_todoList));
+  }
+
+  void _addTodoItem(String task) {
+    if (task.isEmpty) return;
+
     setState(() {
-      _isLoading = true;
+      _todoList.add({'task': task, 'isCompleted': false});
+      _saveTodoList();
     });
 
-    final pickedFile =
-    await ImagePicker().pickImage(source: ImageSource.gallery);
+    _todoController.clear();
+  }
 
-    if (pickedFile != null) {
-      _image = File(pickedFile.path);
-      await _uploadProfileImage();
-    }
-
+  void _deleteTodoItem(int index) {
     setState(() {
-      _isLoading = false;
+      _todoList.removeAt(index);
+      _saveTodoList();
     });
   }
 
-  Future<void> _uploadProfileImage() async {
-    if (_image == null || user == null) return;
+  void _toggleTodoItem(int index) {
+    setState(() {
+      _todoList[index]['isCompleted'] = !_todoList[index]['isCompleted'];
+      _saveTodoList();
+    });
+  }
 
-    final storageRef = FirebaseStorage.instance
-        .ref()
-        .child('profile_images')
-        .child('${user!.uid}.jpg');
+  void _updateUserName() {
+    setState(() {
+      _userName = _nameController.text;
+      _saveUserName(_userName);
+    });
 
-    await storageRef.putFile(_image!);
-    final imageUrl = await storageRef.getDownloadURL();
+    Navigator.of(context).pop();
+  }
 
-    await user!.updatePhotoURL(imageUrl);
-    await user!.reload();
-    await _loadProfileImage();
+  void _showEditNameDialog() {
+    _nameController.text = _userName;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Изменить имя'),
+          content: TextField(
+            controller: _nameController,
+            decoration: InputDecoration(hintText: "Введите ваше имя"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Отмена'),
+            ),
+            TextButton(
+              onPressed: _updateUserName,
+              child: Text('Сохранить'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _signOut() async {
@@ -71,143 +115,88 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).pushReplacementNamed('/auth');
   }
 
-  Future<void> _addTodoItem(String task) async {
-    if (task.isEmpty) return;
-
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .collection('todos')
-        .add({'task': task, 'isCompleted': false});
-  }
-
-  Future<void> _deleteTodoItem(String id) async {
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .collection('todos')
-        .doc(id)
-        .delete();
-  }
-
-  Future<void> _toggleTodoItem(String id, bool isCompleted) async {
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .collection('todos')
-        .doc(id)
-        .update({'isCompleted': !isCompleted});
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Home'),
+        title: Text('Домой'),
         actions: [
+          IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: _showEditNameDialog,
+          ),
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: _signOut,
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          Center(
-            child: _isLoading
-                ? SpinKitCircle(color: Colors.white, size: 50.0)
-                : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundImage: _profileImageUrl != null
-                        ? NetworkImage(_profileImageUrl!)
-                        : null,
-                    child: _profileImageUrl == null
-                        ? Icon(Icons.camera_alt,
-                        size: 50, color: Colors.white)
-                        : null,
-                  ),
-                ),
-                SizedBox(height: 20),
-                Text(
-                  'Welcome, ${user?.email}!',
-                  style: TextStyle(
-                    color: Color.fromARGB(255, 93, 193, 218),
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: TextField(
-                    controller: _todoController,
-                    decoration: InputDecoration(
-                      labelText: 'Add a new task',
-                      suffixIcon: IconButton(
-                        icon: Icon(Icons.add),
-                        onPressed: () {
-                          _addTodoItem(_todoController.text);
-                          _todoController.clear();
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('users')
-                        .doc(user!.uid)
-                        .collection('todos')
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      }
-                      final todos = snapshot.data!.docs;
-                      return ListView.builder(
-                        itemCount: todos.length,
-                        itemBuilder: (context, index) {
-                          final todo = todos[index];
-                          return ListTile(
-                            title: Text(
-                              todo['task'],
-                              style: TextStyle(
-                                decoration: todo['isCompleted']
-                                    ? TextDecoration.lineThrough
-                                    : TextDecoration.none,
-                              ),
-                            ),
-                            leading: Checkbox(
-                              value: todo['isCompleted'],
-                              onChanged: (value) {
-                                _toggleTodoItem(
-                                    todo.id, todo['isCompleted']);
-                              },
-                            ),
-                            trailing: IconButton(
-                              icon: Icon(Icons.delete),
-                              onPressed: () {
-                                _deleteTodoItem(todo.id);
-                              },
-                            ),
-                          );
-                        },
-                      );
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(height: 20),
+            CircleAvatar(
+              radius: 50,
+              child: Icon(Icons.person, size: 50),
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Добро пожаловать, $_userName!',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: TextField(
+                controller: _todoController,
+                decoration: InputDecoration(
+                  labelText: 'Добавить новую задачу',
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.add),
+                    onPressed: () {
+                      _addTodoItem(_todoController.text);
                     },
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+            Expanded(
+              child: ListView.builder(
+                itemCount: _todoList.length,
+                itemBuilder: (context, index) {
+                  final todo = _todoList[index];
+                  return Card(
+                    margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 16.0),
+                    child: ListTile(
+                      title: Text(
+                        todo['task'],
+                        style: TextStyle(
+                          decoration: todo['isCompleted'] ? TextDecoration.lineThrough : TextDecoration.none,
+                        ),
+                      ),
+                      leading: Checkbox(
+                        value: todo['isCompleted'],
+                        onChanged: (value) {
+                          _toggleTodoItem(index);
+                        },
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () {
+                          _deleteTodoItem(index);
+                        },
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

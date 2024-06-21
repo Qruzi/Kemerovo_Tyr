@@ -48,7 +48,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
           child: ListView(
             children: <Widget>[
               Text(
-                'Мы бы с удовольствием выслушали ваши соображения!',
+                'Мы будем очень рады вашему письму!',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
